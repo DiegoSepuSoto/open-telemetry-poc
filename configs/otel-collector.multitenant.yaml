@@ -1,0 +1,24 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+exporters:
+  logging:
+    logLevel: debug
+  jaeger:
+    endpoint: tempo:14250
+    tls:
+      insecure: true
+  otlp:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+    headers:
+      x-scope-orgid: otel-poc
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp, logging, jaeger]
