@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-api
+  template:
+    metadata:
+      labels:
+        app: customer-api
+    spec:
+      containers:
+        - env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://collector:5555
+            - name: OTEL_IMR_EXPORT_INTERVAL
+              value: "5000"
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "5000"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.name=customer-api,service.version=1.0,deployment.environment=docker-compose
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_TRACES_SAMPLER
+              value: always_on
+          image: diegosepusoto/otel-basic-customer-api:main
+          name: customer-api
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "800m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+      restartPolicy: Always

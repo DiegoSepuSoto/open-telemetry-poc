@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-api
+  template:
+    metadata:
+      labels:
+        app: order-api
+    spec:
+      containers:
+        - env:
+            - name: CUSTOMER_API_HOST
+              value: http://customer-api:8080
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://collector:5555
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+            - name: OTEL_SERVICE_NAME
+              value: order-api
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+          image: diegosepusoto/otel-basic-order-api:main
+          name: order-api
+          ports:
+            - containerPort: 8081
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+      restartPolicy: Always

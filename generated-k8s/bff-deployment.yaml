@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bff
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bff
+  template:
+    metadata:
+      labels:
+        app: bff
+    spec:
+      containers:
+        - env:
+            - name: ORDER_API_HOST
+              value: http://order-api:8081
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: collector:5555
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+            - name: OTEL_SERVICE_NAME
+              value: bff
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+          image: diegosepusoto/otel-basic-website-bff:main
+          name: bff
+          ports:
+            - containerPort: 8082
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+      restartPolicy: Always
