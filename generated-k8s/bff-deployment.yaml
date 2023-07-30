@@ -17,7 +17,7 @@ spec:
             - name: ORDER_API_HOST
               value: http://order-api:8081
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: collector:5555
+              value: opentelemetry-collector:4317
             - name: OTEL_METRICS_EXPORTER
               value: otlp
             - name: OTEL_SERVICE_NAME
