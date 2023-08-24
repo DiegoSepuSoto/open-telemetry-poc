@@ -4,11 +4,11 @@ services:
   customer-api:
     image: diegosepusoto/otel-basic-customer-api:main
     ports:
-      - "8080:8080"
+      - 8080:8080
     environment:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:5555
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
       - OTEL_TRACES_SAMPLER=always_on
       - OTEL_IMR_EXPORT_INTERVAL=5000
       - OTEL_METRIC_EXPORT_INTERVAL=5000
@@ -17,11 +17,11 @@ services:
   order-api:
     image: diegosepusoto/otel-basic-order-api:main
     ports:
-      - "8081:8081"
+      - 8081:8081
     environment:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:5555
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
       - OTEL_SERVICE_NAME=order-api
       - CUSTOMER_API_HOST=http://customer-api:8080
     depends_on:
@@ -30,18 +30,18 @@ services:
   bff:
     image: diegosepusoto/otel-basic-website-bff:main
     ports:
-      - "8082:8082"
+      - 8082:8082
     environment:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
-      - OTEL_EXPORTER_OTLP_ENDPOINT=collector:5555
+      - OTEL_EXPORTER_OTLP_ENDPOINT=collector:4317
       - OTEL_SERVICE_NAME=bff
       - ORDER_API_HOST=http://order-api:8081
     depends_on:
       - order-api
 
   collector:
-    image: otel/opentelemetry-collector:latest
+    image: otel/opentelemetry-collector:0.81.0
     container_name: collector
     hostname: collector
     depends_on:
@@ -52,9 +52,6 @@ services:
     command: ["--config=/etc/collector-config.yaml"]
     volumes:
       - ./configs/collector-config.yaml:/etc/collector-config.yaml
-    ports:
-      - "5555:5555"
-      - "6666:6666"
 
   tempo:
     image: grafana/tempo:1.5.0
@@ -65,9 +62,6 @@ services:
       - ./configs/tempo-config.yaml:/etc/tempo.yaml
       - ./configs/tempo-overrides.yaml:/etc/overrides.yaml
       - ./configs/tempo-data:/tmp/tempo
-    ports:
-      - "3200:3200"
-      - "4317:4317"
     healthcheck:
       interval: 5s
       retries: 10
@@ -83,8 +77,6 @@ services:
       - --enable-feature=exemplar-storage
     volumes:
       - ./configs/prometheus.yaml:/etc/prometheus.yaml
-    ports:
-      - "9090:9090"
     healthcheck:
       interval: 5s
       retries: 10
@@ -107,7 +99,7 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     ports:
-      - "3000:3000"
+      - 3000:3000
     healthcheck:
       interval: 5s
       retries: 10
