@@ -2,7 +2,6 @@ receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: 0.0.0.0:5555
 
 processors:
   batch:
@@ -11,7 +10,7 @@ processors:
 
 exporters:
   prometheus:
-    endpoint: collector:6666
+    endpoint: collector:8889
     namespace: default
   otlp:
     endpoint: tempo:4317
