@@ -7,11 +7,7 @@ services:
       - 8080:8080
     environment:
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
-      - OTEL_TRACES_SAMPLER=always_on
-      - OTEL_IMR_EXPORT_INTERVAL=5000
-      - OTEL_METRIC_EXPORT_INTERVAL=5000
       - OTEL_RESOURCE_ATTRIBUTES=service.name=customer-api,service.version=1.0,deployment.environment=docker-compose
 
   order-api:
@@ -20,13 +16,12 @@ services:
       - 8081:8081
     environment:
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
-      - OTEL_SERVICE_NAME=order-api
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=order-api,service.version=1.0,deployment.environment=docker-compose
       - CUSTOMER_API_HOST=http://customer-api:8080
     depends_on:
       - customer-api
-  
+
   bff:
     image: diegosepusoto/otel-basic-website-bff:main
     ports:
@@ -35,7 +30,7 @@ services:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=collector:4317
-      - OTEL_SERVICE_NAME=bff
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=bff,service.version=1.0,deployment.environment=docker-compose
       - ORDER_API_HOST=http://order-api:8081
     depends_on:
       - order-api
@@ -44,63 +39,49 @@ services:
     image: otel/opentelemetry-collector:0.81.0
     container_name: collector
     hostname: collector
-    depends_on:
-      tempo:
-        condition: service_healthy
-      prometheus:
-        condition: service_healthy
     command: ["--config=/etc/collector-config.yaml"]
     volumes:
       - ./configs/collector-config.yaml:/etc/collector-config.yaml
 
-  tempo:
-    image: grafana/tempo:1.5.0
-    command: [ "-search.enabled=true", "-config.file=/etc/tempo.yaml" ]
-    container_name: tempo
-    hostname: tempo
-    volumes:
-      - ./configs/tempo-config.yaml:/etc/tempo.yaml
-      - ./configs/tempo-overrides.yaml:/etc/overrides.yaml
-      - ./configs/tempo-data:/tmp/tempo
-    healthcheck:
-      interval: 5s
-      retries: 10
-      test: wget --no-verbose --tries=1 --spider http://localhost:3200/status || exit 1
-
-  prometheus:
-    image: prom/prometheus:v2.39.2
-    container_name: prometheus
-    hostname: prometheus
-    command:
-      - --config.file=/etc/prometheus.yaml
-      - --web.enable-remote-write-receiver
-      - --enable-feature=exemplar-storage
-    volumes:
-      - ./configs/prometheus.yaml:/etc/prometheus.yaml
-    healthcheck:
-      interval: 5s
-      retries: 10
-      test: wget --no-verbose --tries=1 --spider http://localhost:9090/status || exit 1
-
-  grafana:
-    image: grafana/grafana:9.2.2
-    container_name: grafana
-    hostname: grafana 
-    depends_on:
-      tempo:
-        condition: service_healthy
-      prometheus:
-        condition: service_healthy
-    volumes:
-      - ./configs/grafana-bootstrap.ini:/etc/grafana/grafana.ini
-      - ./configs/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-    environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_DISABLE_LOGIN_FORM=true
+  jaeger:
+    image: jaegertracing/all-in-one:1.48
     ports:
-      - 3000:3000
-    healthcheck:
-      interval: 5s
-      retries: 10
-      test: wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+      - "16686:16686"
+
+  # prometheus:
+  #   image: prom/prometheus:v2.39.2
+  #   container_name: prometheus
+  #   hostname: prometheus
+  #   command:
+  #     - --config.file=/etc/prometheus.yaml
+  #     - --web.enable-remote-write-receiver
+  #     - --enable-feature=exemplar-storage
+  #   volumes:
+  #     - ./configs/prometheus.yaml:/etc/prometheus.yaml
+  #   healthcheck:
+  #     interval: 5s
+  #     retries: 10
+  #     test: wget --no-verbose --tries=1 --spider http://localhost:9090/status || exit 1
+
+  # grafana:
+  #   image: grafana/grafana:9.2.2
+  #   container_name: grafana
+  #   hostname: grafana
+  #   depends_on:
+  #     tempo:
+  #       condition: service_healthy
+  #     prometheus:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./configs/grafana-bootstrap.ini:/etc/grafana/grafana.ini
+  #     - ./configs/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+  #   environment:
+  #     - GF_AUTH_ANONYMOUS_ENABLED=true
+  #     - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+  #     - GF_AUTH_DISABLE_LOGIN_FORM=true
+  #   ports:
+  #     - 3000:3000
+  #   healthcheck:
+  #     interval: 5s
+  #     retries: 10
+  #     test: wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1

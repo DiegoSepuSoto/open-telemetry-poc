@@ -13,7 +13,8 @@ exporters:
     endpoint: collector:8889
     namespace: default
   otlp:
-    endpoint: tempo:4317
+    # endpoint: tempo:4317
+    endpoint: jaeger:4317
     tls:
       insecure: true
 
