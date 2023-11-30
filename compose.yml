@@ -28,10 +28,20 @@ services:
       - 8082:8082
     environment:
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=otlp
-      - OTEL_EXPORTER_OTLP_ENDPOINT=collector:4317
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
       - OTEL_RESOURCE_ATTRIBUTES=service.name=bff,service.version=1.0,deployment.environment=docker-compose
       - ORDER_API_HOST=http://order-api:8081
+    depends_on:
+      - order-api
+  
+  web:
+    image: diegosepusoto/otel-basic-orders-web:main
+    ports:
+      - 8083:80
+    environment:
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=basic-orders-web,service.version=1.0,deployment.environment=docker-compose
     depends_on:
       - order-api
 
@@ -40,6 +50,8 @@ services:
     container_name: collector
     hostname: collector
     command: ["--config=/etc/collector-config.yaml"]
+    ports:
+      - "4318:4318"
     volumes:
       - ./configs/collector-config.yaml:/etc/collector-config.yaml
 

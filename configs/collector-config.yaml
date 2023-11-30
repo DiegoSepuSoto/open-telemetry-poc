@@ -2,6 +2,13 @@ receivers:
   otlp:
     protocols:
       grpc:
+      http:
+        include_metadata: true
+        cors:
+          allowed_origins:
+            - http://*
+            - https://*
+          allowed_headers: ["*"]
 
 processors:
   batch:
